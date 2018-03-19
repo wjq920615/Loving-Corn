@@ -16,4 +16,4 @@ SELECT empseq.nextval  FROM dual;
    NEXTVAL
 ----------
        1
-第一次必须先NEXTVAL一下得到当前值
+第一次必须先NEXTVAL一下得到当前值 
