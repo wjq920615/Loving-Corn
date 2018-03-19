@@ -1,2 +1,3 @@
 # Loving-Corn
 learning
+通过对db.propertise文件的配置，动态实现通过dbUtil或者dbTool的方式来进行对数据库的连接
