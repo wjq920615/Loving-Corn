@@ -1,0 +1,19 @@
+--创建序列
+CREATE SEQUENCE empseq 
+START WITH 1 
+INCREMENT BY 1 
+ORDER NOCYCLE;
+
+但如果直接使用empseq.CURRVAL会报错；
+SELECT empseq.CURRVAL  FROM dual
+       *
+第 1 行出现错误:
+ORA-08002: 序列 EMPSEQ.CURRVAL 尚未在此会话中定义
+
+序列创建后应先使用empseq.nextva得到当前值，再使用empseq.CURRVAL或empseq.nextval;
+SELECT empseq.nextval  FROM dual;
+
+   NEXTVAL
+----------
+       1
+第一次必须先NEXTVAL一下得到当前值 

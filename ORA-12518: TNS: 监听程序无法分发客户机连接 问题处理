@@ -1,0 +1,41 @@
+开发过程中有时候会报ORA-12518: TNS: 监听程序无法分发客户机连接
+原因：团队成员增多，原有数据库设置不够用，导致连接plsql和启动tomcat时经常抛出“无法分发客户端连接”的异常
+
+我的处理方法：
+远程连接到数据库所在的远程计算机，以管理员身份运行CMD,输入 sqlplus / as sysdba;
+接下来就是根据网上处理ORA-12518的资料进行操作,如下：
+1、首先修改ORACLE的PROCESS、SESSION数量
+
+         查看当前ORALCE PROCESS数量
+
+         SQL> show parameter process
+
+        查看当前ORALCE SESSION数量
+
+        SQL> show parameter session
+
+        修改PROCESS数量：
+
+        SQL>  alter system set processes=1000 scope = spfile;
+
+        修改SESSION数量：
+
+        SQL> alter system set session=1105 scope = spfile;
+
+        注：sessions是个派生值,由processes的值决定,公式sessions=1.1*process + 5
+
+  2、降低系统的SGA大小
+
+        查看SGA的大小:
+
+        SQL> show parameter sga
+
+       同时修改sga_max_size和sga_target
+
+       SQL>  alter system set sga_max_size=1000M scope = spfile;
+
+       SQL>  alter system set sga_target=1000M scope = spfile;
+
+ 
+
+然后找到该数据库对应的服务，重启ORACLE服务，问题基本解决。转载出自：http://blog.csdn.net/zouyujie1127/article/details/16883493
