@@ -1,0 +1,44 @@
+有些东西都是网上查资料解决的问题，隔段时间就又忘了。特此卸载自己博客上，同样的问题直接找自己的笔记。本笔记记录 eclipse配置Maven。
+
+Eclipse上配置Maven主要有以下几个步骤:
+
+1.官网下载Maven压缩包，解压
+
+2.配置环境变量
+
+     3.设置Maven的本地仓库
+
+4.Eclipse中添加Maven设置
+
+
+具体的操作细节如下:
+
+       第一步下载Maven直接度娘。并解压。
+
+
+
+配置环境变量：
+
+点击计算机属性--->高级设置--->环境变量。添加MAVEN_HOME/PATH关于Maven的配置。具体如图：
+
+
+
+配置完成之后查看是否配置成功：运行 cmd  输入  mvn  -v  回车， 
+
+如图所示配置OK了。
+
+配置Maven的本地仓库：打开之前下载的maven下的conf文件的settings.并改写自己本地的maven仓库。
+
+
+
+配置好本地仓库。
+
+最后Eclipse中添加maven配置
+
+箭头的索引对应之前更改的settings文件，之后Update Settings-->Apply---->OK.
+
+
+
+整个Eclipse配置Maven完成。
+
+转载出自： https://blog.csdn.net/izuiaicy/article/details/70311968
