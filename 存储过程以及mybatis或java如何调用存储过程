@@ -1,0 +1,79 @@
+存储过程有严格的格式要求，下面为简单的存储过程例子：
+例子一：
+-- 创建存储过程(查询得到男性或女性的数量, 如果传入的是0就女性否则是男性)
+DELIMITER $
+CREATE PROCEDURE mybatis.ges_user_count(IN sex_id INT, OUT user_count INT)
+BEGIN 
+IF sex_id=0 THEN
+SELECT COUNT(*) FROM mybatis.p_user WHERE p_user.sex='女' INTO user_count;
+ELSE
+SELECT COUNT(*) FROM mybatis.p_user WHERE p_user.sex='男' INTO user_count;
+END IF;
+END 
+$
+
+例子二：
+CREATE OR REPLACE PACKAGE BODY FDMP."FDMP_DATA_PRO_FUN_PKG" IS
+  PROCEDURE PRO_FDMP_PITA_H_ATTACH_IS_GEN2(MODELID IN VARCHAR2) is
+  BEGIN
+     IF MODELID IS NOT NULL THEN
+         UPDATE FDMP.FDMP_PITA_H SET ATTACHMENT=sys_guid() WHERE MODEL_ID=MODELID;
+      COMMIT;
+     END IF;
+  END PRO_FDMP_PITA_H_ATTACH_IS_GEN2;  
+END FDMP_DATA_PRO_FUN_PKG;
+
+再其次就是对存储过程的调用了
+
+在Java里面调用存储过程，写法那是相当的固定：
+Class.forName(....
+Connection conn = DriverManager.getConnection(....
+/**
+*p是要调用的存储过程的名字，存储过程的4个参数，用4个？号占位符代替
+*其余地方写法固定
+*/
+CallableStatement cstmt = conn.prepareCall("{call p(?,?,?,?)}");
+/**
+*告诉JDBC，这些个参数，哪些是输出参数，输出参数的类型用java.sql.Types来指定
+*下面的意思是，第3个？和第4个？是输出参数，类型是INTEGER的
+*Types后面具体写什么类型，得看你的存储过程参数怎么定义的
+*/
+cstmt.registerOutParameter(3, Types.INTEGER);
+cstmt.registerOutParameter(4, Types.INTEGER);
+/**
+*在我这里第1个？和第2个？是输入参数，第3个是输出参数，第4个既输入又输出
+*下面是设置他们的值,第一个设为3，第二个设为4，第4个设置为5
+*没设第3个，因为它是输出参数
+*/
+cstmt.setInt(1, 3);
+cstmt.setInt(2, 4);
+cstmt.setInt(4, 5);
+//执行
+cstmt.execute();
+//把第3个参数的值当成int类型拿出来
+int three = cstmt.getInt(3);
+System.out.println(three);
+//把第4个参数的值当成int类型拿出来
+int four = cstmt.getInt(4);
+System.out.println(four);
+//用完别忘给人家关了，后开的先关
+cstmt.close();
+conn.close();
+  
+JDBC调用存储过程，掌握这一个程序足够了.
+
+如果是mybatis调用的话，即需要一个mapper.xml配置文件，如下：
+<!-- 
+     查询得到男性或女性的数量, 如果传入的是0就女性否则是男性
+    -->
+   <select id="getUserCount" parameterMap="getUserCountMap" statementType="CALLABLE">
+     CALL mybatis.ges_user_count(?,?)
+   </select>  
+   <!--
+     parameterMap.put("sexid", 0);
+     parameterMap.put("usercount", -1);
+   -->
+   <parameterMap type="java.util.Map" id="getUserCountMap">
+     <parameter property="sexid" mode="IN" jdbcType="INTEGER"/>
+     <parameter property="usercount" mode="OUT" jdbcType="INTEGER"/>
+   </parameterMap>
