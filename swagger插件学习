@@ -1,0 +1,427 @@
+Swagger使用总结
+1. Swagger是什么？
+官方说法：Swagger是一个规范和完整的框架，用于生成、描述、调用和可视化 RESTful 风格的 Web 服务。总体目标是使客户端和文件系统作为服务器以同样的速度来更新。文件的方法，参数和模型紧密集成到服务器端的代码，允许API来始终保持同步。
+个人觉得，swagger的一个最大的优点是能实时同步api与文档。在项目开发过程中，发生过多次：修改代码但是没有更新文档，前端还是按照老旧的文档进行开发，在联调过程中才发现问题的情况（当然依据开闭原则，对接口的修改是不允许的，但是在项目不稳定阶段，这种情况很难避免）。
+2. spring boot 集成 Swagger
+目前维护的系统是基于springboot框架开发的，因此本文会详细描述springboot与swagger集成的过程。
+3，Swagger使用步骤：
+3.1 导入相关的maven依赖
+<!--                         swagger开始                   -->
+      <dependency>
+          <groupId>io.springfox</groupId>
+          <artifactId>springfox-swagger2</artifactId>
+          <version>2.5.0</version>
+      </dependency>
+      <dependency>
+          <groupId>io.springfox</groupId>
+          <artifactId>springfox-swagger-ui</artifactId>
+          <version>2.5.0</version>
+      </dependency>
+      <dependency>
+          <groupId>io.springfox</groupId>
+          <artifactId>springfox-staticdocs</artifactId>
+          <version>2.5.0</version>
+      </dependency>
+      <!--                         swagger结束                   -->
+
+3.2 创建相关实体，controller，响应对象，主要看其中的注解的使用。
+1 ，@Api(description = "用户相关接口文档")每个controller上的注解，表示这个controller主要的业务模块
+2，@ApiOperation(value = "用户首页", notes = "访问页面")每个方法的注解，表示这个方法的业务功能是什么
+3， @ApiParam(name = "userName",value = "用户昵称",required = true)方法参数注解，表示这个在这个业务方法中的名称，生成后的文档对该字段的说明，同样支持对象类型（引用类型），通过@ApiModelProperty(value = "用户id", required = true)来说明引用类型每个属性的作用。
+4，@RequestHeader("token") String token 这个注解可以获取和设置header的参数，如用户身份签名。
+controller
+package org.kewei.zhang.controllers;
+
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
+import org.kewei.zhang.Beans.TbTest;
+import org.kewei.zhang.entites.Constants;
+import org.kewei.zhang.entites.Result;
+import org.kewei.zhang.entites.UserVo;
+import org.kewei.zhang.mapper.TbTestMapper;
+import org.kewei.zhang.utils.DateUtil;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+
+import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Random;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+/**
+ * @author : kewei.zhang
+ * @Date: 2017/10/19
+ * @Time: 下午3:00
+ * Description: 用于处理所有action的统一入口
+ */
+@SuppressWarnings("ALL")
+@RestController
+@RequestMapping("/case")
+@Api(description = "用户相关接口文档")
+public class SnCaseController extends BaseController {
+
+    @Autowired
+    private TbTestMapper tbTestMapper;
+
+    @GetMapping("/index")
+    @ApiOperation(value = "用户首页", notes = "访问页面")
+    public String index() {
+        TbTest tbTest = new TbTest();
+        tbTest.setAge(1);
+        tbTest.setBrithday(new Date());
+        tbTest.setHigh(172);
+        tbTest.setIsboy((short) 1);
+        tbTest.setName("张克巍");
+        tbTest.setSchool("皖西学院");
+        tbTest.setWigth(158);
+        tbTestMapper.insert(tbTest);
+        return "index";
+    }
+
+
+    @RequestMapping(value = "/add", method = RequestMethod.POST)
+    @ApiOperation(value = "添加用户", notes = "增加用户")
+    public Result<UserVo> add(@ApiParam(name = "token", value = "token",required = true) @RequestParam(name = "token", required = true) String token,
+                              @ApiParam(name = "userName",value = "用户昵称",required = true)@RequestParam(name = "userName",required = true)String userName,
+                              @ApiParam(name = "mobile",value = "手机",required = true)@RequestParam(name = "mobile",required = true)String mobile,
+                              @ApiParam(required = true, name = "email", value = "邮箱") @RequestParam(name = "email", required = true) String email ) {
+
+        return new Result<UserVo>(Constants.SUCCESS,Constants.MSG_SUCCESS,new UserVo());
+    }
+
+    @RequestMapping(value = {"/toAdd","/testAdd"}, method = RequestMethod.GET)
+    @ApiOperation(value = "用户添加", notes = "用户增加")
+    public Result<UserVo> toAdd(@ApiParam(name = "token", value = "token",required = true) @RequestParam(name = "token", required = true) String token,
+                              @ApiParam(name = "userName",value = "用户昵称",required = true)@RequestParam(name = "userName",required = true)String userName,
+                              @ApiParam(name = "mobile",value = "手机",required = true)@RequestParam(name = "mobile",required = true)String mobile,
+                              @ApiParam(required = true, name = "email", value = "邮箱") @RequestParam(name = "email", required = true) String email ) {
+
+        return new Result<UserVo>(Constants.SUCCESS,Constants.MSG_SUCCESS,new UserVo());
+    }
+
+    @RequestMapping(value = "/update", method = RequestMethod.POST)
+    @ApiOperation(value = "更新用户", notes = "用户更新")
+    public Result<UserVo> update(@ApiParam(name = "user", value = "user",required = true)@RequestBody UserVo userVo ) {
+
+        return new Result<UserVo>(Constants.SUCCESS,Constants.MSG_SUCCESS,userVo);
+    }
+
+    @RequestMapping(value = "/getHeader", method = RequestMethod.POST)
+    @ApiOperation(value = "获取用户头部信息", notes = "获取用户头部信息")
+    public Result<UserVo> getHeader(@ApiParam(name = "token", value = "用户身份",required = true)@RequestHeader("token") String token,
+                                    @ApiParam(name = "userName",value = "用户昵称",required = true)@RequestParam(name = "userName",required = true)String userName,
+                                    @ApiParam(name = "mobile",value = "手机",required = true)@RequestParam(name = "mobile",required = true)String mobile) {
+
+        UserVo userVo= new UserVo();
+        userVo.setUserName(token+userName+mobile);
+
+        return new Result<UserVo>(Constants.SUCCESS,Constants.MSG_SUCCESS,userVo);
+    }
+}
+
+
+bean 这里需要注意，如果有boolean类型，要为其添加getXX
+X和setXXX方法，不是isXXX，因为swagger不识别isXXX
+package org.kewei.zhang.entites;
+
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+
+/**
+ * @author: kewei.zhang
+ * @Date: 2017/12/5
+ * @Time: 下午3:15
+ * Description:
+ */
+@ApiModel(value = "用户信息")
+public class UserVo {
+
+    @ApiModelProperty(value = "用户id", required = true)
+    private long userId=10;
+    @ApiModelProperty(value = "昵称", required = true)
+    private String userName="张克巍";
+
+    public long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(long userId) {
+        this.userId = userId;
+    }
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
+    }
+}
+
+
+响应实体
+package org.kewei.zhang.entites;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
+
+import java.io.Serializable;
+
+/**
+ * @author: kewei.zhang
+ * @Date: 2017/12/5
+ * @Time: 下午3:11
+ * Description:
+ */
+@ApiModel
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class Result<T> implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    // 200成功
+    @ApiModelProperty(value = "错误码", name = "错误码")
+    private int code;
+
+    // 返回消息，成功为“success”，失败为具体失败信息
+    @ApiModelProperty(value = "错误码描述", name = "错误码描述")
+    private String desc;
+
+    // 返回数据
+    @ApiModelProperty(value = "数据对象", name = "数据对象")
+    private T data;
+
+    public Result() {
+    }
+
+    public Result(int code, String desc) {
+        this.code = code;
+        this.desc = desc;
+    }
+
+    public Result(int code, String desc, T data) {
+        this.code = code;
+        this.desc = desc;
+        this.data = data;
+    }
+
+    public int getCode() {
+        return code;
+    }
+
+    public void setCode(int code) {
+        this.code = code;
+    }
+
+    public String getDesc() {
+        return desc;
+    }
+
+    public void setDesc(String desc) {
+        this.desc = desc;
+    }
+
+    public T getData() {
+        return data;
+    }
+
+    public void setData(T data) {
+        this.data = data;
+    }
+
+    @Override
+    public String toString() {
+        return "Result{" +
+                "code=" + code +
+                ", desc='" + desc + '\'' +
+                ", data=" + data +
+                '}';
+    }
+}
+
+package org.kewei.zhang.entites;
+
+/**
+ * @author: kewei.zhang
+ * @Date: 2017/12/5
+ * @Time: 下午3:13
+ * Description:
+ */
+public interface Constants {
+
+    ////////////// 系统标识符 开始//////////////////
+    /**
+     * 错误 描述
+     */
+    String MSG_ERROR = "error";
+    /**
+     * 成功 描述
+     */
+    String MSG_SUCCESS = "OK";
+
+
+    ////////////// 系统状态码 开始//////////////////
+    /**
+     * 请求失败
+     */
+    int ERROR = 100;
+    /**
+     * 请求成功
+     */
+    int SUCCESS = 200;
+}
+
+
+3.3 swagger添加配置信息@Configuration@EnableSwagger2
+package org.kewei.zhang.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.stereotype.Component;
+import springfox.documentation.builders.PathSelectors;
+import springfox.documentation.builders.RequestHandlerSelectors;
+import springfox.documentation.service.ApiInfo;
+import springfox.documentation.service.Contact;
+import springfox.documentation.spi.DocumentationType;
+import springfox.documentation.spring.web.plugins.Docket;
+import springfox.documentation.swagger2.annotations.EnableSwagger2;
+
+/**
+* @author: kewei.zhang
+* @Date: 2017/12/5
+* @Time: 下午3:04
+* Description:
+*/
+@Configuration
+@EnableSwagger2
+@Component
+public class SwaggerConfig {
+
+   @Bean
+   public Docket userApi() {
+       return new Docket(DocumentationType.SWAGGER_2)
+               .groupName("用户")
+               .select()
+               .apis(RequestHandlerSelectors.basePackage("org.kewei.zhang.controller"))// 选择那些路径和api会生成document,每个controller都需要添加
+               .paths(PathSelectors.any()) // 对所有路径进行监控
+               .build()
+               .apiInfo(userInfo());
+   }
+
+   private ApiInfo userInfo() {
+       ApiInfo apiInfo = new ApiInfo("用户相关接口",//大标题
+               "用户有关的接口，包括增加删除用户",//小标题
+               "0.1",//版本
+               "上海",
+               new Contact("zkw", "", ""),// 作者
+               "swagger url",//链接显示文字
+               ""//网站链接
+       );
+       return apiInfo;
+   }
+
+}
+
+
+3.4 在浏览器中输入http://ip:port/your-app-root/swagger-ui.html 即可生成相应的文档并可以随时测试。
+
+
+
+
+
+图片.png
+
+
+
+
+
+
+图片.png
+
+图中的文字说明都是通过之前的注解添加进去的
+上述是完成生成api文档的具体步骤，但是有这样几个问题值得大家思考。
+接口文档生成，需要嵌入我们的项目中，对我们的代码有侵入，这一点现在避免不了，而且我们只希望用户在我们的测试环境去测试，不希望生成环境去生成文档，如何解决这个问题，方法有两种，如下：
+在配置中做管理
+@Configuration   
+@EnableSwagger2   
+@EnableWebMvc  
+@ComponentScan("com.XXX.controller")  
+public class SwaggerConfig{  
+      
+    @Autowired  
+    ConfigService configService;  
+      
+    @Bean  
+    public Docket customDocket() {  
+        if(configService.getServerEnv() == ServerEnvEnum.ONLINE) {  
+            return new Docket(DocumentationType.SWAGGER_2)  
+            .apiInfo(apiInfoOnline())  
+        .select()  
+                .paths(PathSelectors.none())//如果是线上环境，添加路径过滤，设置为全部都不符合  
+        .build();  
+        }else {  
+            return new Docket(DocumentationType.SWAGGER_2)  
+            .apiInfo(apiInfo());  
+        }  
+    }  
+  
+    private ApiInfo apiInfo() {  
+        return new ApiInfoBuilder()  
+                .title("XXX系统")  
+                .description("XXX系统接口")  
+                .license("")  
+                .licenseUrl("")  
+                .termsOfServiceUrl("")  
+                .version("1.0.0")  
+                .contact(new Contact("","", ""))  
+                .build();  
+    }  
+    private ApiInfo apiInfoOnline() {  
+        return new ApiInfoBuilder()  
+                .title("")  
+                .description("")  
+                .license("")  
+                .licenseUrl("")  
+                .termsOfServiceUrl("")  
+                .version("")  
+                .contact(new Contact("","", ""))  
+                .build();  
+    }  
+} 
+
+另一种方式是：
+修改一下依赖，为了编译通过，单独把swagger-annotations拿出来,线上环境把springfox-swagger-ui的依赖配置成是provided，这样可以实现http://localhost/swagger-ui.html访问404。但是：http://localhost/v2/api-docs和http://localhost/swagger-resources等接口依然能够访问，尽管是空的！
+            <dependency>  
+                <groupId>io.swagger</groupId>  
+                <artifactId>swagger-annotations</artifactId>  
+                <version>${springfox-swagger-anno.version}</version>  
+            </dependency>  
+            <dependency>  
+                <groupId>io.springfox</groupId>  
+                <artifactId>springfox-swagger2</artifactId>  
+                <version>${springfox-swagger.version}</version>  
+            </dependency>  
+            <dependency>  
+                <groupId>io.springfox</groupId>  
+                <artifactId>springfox-swagger-ui</artifactId>  
+                <scope>${swagger.scope}</scope>  
+                <version>${springfox-swagger.version}</version>  
+            </dependency>  
+
+          <profile>  
+                <id>online</id>  
+                <properties>  
+                    <profiles.active>online</profiles.active>  
+                    <swagger.scope>provided</swagger.scope>  
+                </properties>  
+            </profile>
+
+作者：时之令
+链接：https://www.jianshu.com/p/c8b5382c39dc
+来源：简书
+简书著作权归作者所有，任何形式的转载都请联系作者获得授权并注明出处。
