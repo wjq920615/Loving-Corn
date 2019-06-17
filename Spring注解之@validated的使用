@@ -1,0 +1,55 @@
+spring-boot中可以用@validated来校验数据，如果数据异常则会统一抛出异常，方便异常中心统一处理。
+比如，我们判断一个输入参数是否合法，可以用如下方式
+
+一 基础使用
+因为spring-boot已经引入了基础包，所以直接使用就可以了
+1 首先在controller上声明需要对数据进行校验
+
+@RequestMapping(value="/url.json",method= {RequestMethod.POST})
+@ResponseBody
+@Transactional
+public Result<?> xxmethod( @RequestBody @Validated  XoPO xoPo)     
+    throws ParseException, UnsupportedEncodingException {}
+2 然后在bean上声明需要被校验的字段
+
+复制代码
+@data
+public class XoPO{
+    
+    @validated
+    private List<OrderPerson> personList;
+    
+    @NotNull
+    @Size(max=32,message="code is null")
+    private String code;
+
+    @NotBlank
+    @Size(max=32,message="product is null")
+    private String product;
+}
+复制代码
+而后，当输入不能满足条件是，就会抛出异常，而后统一由异常中心处理
+也可以用BindingResult，但是用了这个后就必须手动处理异常，侵入了正常的逻辑过程，并不推荐
+
+二 常用注解类型
+注意，不要错用了异常类型，比如在int上不可用@size
+
+常用注解如下：
+  @AssertFalse 校验false
+@AssertTrue 校验true
+@DecimalMax(value=,inclusive=) 小于等于value，
+inclusive=true,是小于等于
+@DecimalMin(value=,inclusive=) 与上类似
+@Max(value=) 小于等于value
+@Min(value=) 大于等于value
+@NotNull  检查Null
+@Past  检查日期
+@Pattern(regex=,flag=)  正则
+@Size(min=, max=)  字符串，集合，map限制大小
+@Validate 对po实体类进行校验
+@NotNull：不能为null，但可以为empty
+@NotEmpty：不能为null，而且长度必须大于0
+@NotBlank：只能作用在String上，不能为null，而且调用trim()后，长度必须大于0
+
+【转载】https://segmentfault.com/a/1190000011712893
+  
