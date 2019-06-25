@@ -1,0 +1,39 @@
+1、Spring boot配置文件介绍
+           spring boot之所以能简化开发，其配置文件起到了很重要的作用，第三方集成配置都可以写在这个配置文件里面，这个配置文件有2个格式，application.properties和application.yaml(yml)都可以。下面来介绍2中配置文件的情况。
+
+application.properties
+                  格式：key-value
+                  演示：  
+
+server.port=8080
+logging.level.root=error
+application.yaml(yml)
+                   格式：类似于JSON格式的形式，因为这个格式就是JSON的超集
+                   演示：  
+
+server:
+  port: 8080
+logging:
+  level: 
+    root: info
+    
+ 2、通过不同的方式获取配置文件的自定义值：
+    
+
+@Value 简单快捷，适合少数配置，少数取值，而且支持的值的类型比较少
+
+@ ConfigurationProperties，适合当做对象取值，多数取值，支持的类型较多，基本的类型都支持
+
+@PropertySource，适合多个配置文件，从不同的配置文件里面加载不同的值
+
+
+3：配置多种不同的环境开发文件
+
+  在application.yaml里配置：
+    spring: 
+      profiles: 
+        active: dev
+        
+     这就指定了需要加载的文件是application-dev.yaml
+
+
